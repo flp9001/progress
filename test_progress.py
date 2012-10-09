@@ -14,6 +14,10 @@ from progress.counter import Counter, Countdown, Stack, Pie
 for bar in (Bar, ChargingBar, FillingSquaresBar, FillingCirclesBar):
     for i in bar(bar.__name__).iter(range(100)):
         sleep(0.04)
+        
+for bar in (Bar, ChargingBar, FillingSquaresBar, FillingCirclesBar):
+    for i in bar(bar.__name__+' (period=0.5s)',period=0.5).iter(range(100)):
+        sleep(0.04)
 
 for bar in (IncrementalBar, ShadyBar):
     for i in bar(bar.__name__).iter(range(200)):

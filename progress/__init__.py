@@ -24,7 +24,6 @@ __version__ = '1.0.2'
 
 class Infinite(object):
     file = stderr
-    avg_window = 10
 
     def __init__(self, *args, **kwargs):
         self.ctx = {}
@@ -35,15 +34,14 @@ class Infinite(object):
                 self.ctx[key] = val
 
         self.index = 0
+        self.prev = 0
         self.avg = 0
         self._ts = time()
 
     def update_stats(self):
         # Calculate moving average
         now = time()
-        dt = now - self._ts
-        w = self.avg_window
-        self.avg = dt if self.avg else (dt + w * self.avg) / (w + 1)
+        self.avg = now - self._ts
         self._ts = now
 
         kv = [(key, val) for key, val in self.__dict__.items()
@@ -73,11 +71,13 @@ class Infinite(object):
 
 class Progress(Infinite):
     backtrack = False
+    period = False    # refresh period
 
     def __init__(self, *args, **kwargs):
         super(Progress, self).__init__(*args, **kwargs)
         self.max = kwargs.get('max', 100)
         self.eta = 0
+        self.last_blit = 0
 
     def update_stats(self):
         self.progress = min(1, self.index / self.max)
@@ -87,9 +87,7 @@ class Progress(Infinite):
         # Calculate moving average
         now = time()
         if self.delta:
-            dt = (now - self._ts) / self.delta
-            w = self.avg_window
-            self.avg = dt if self.avg else (dt + w * self.avg) / (w + 1)
+            self.avg = (now - self._ts) / self.delta
             self.eta = int(ceil(self.avg * self.remaining))
         self._ts = now
 
@@ -103,11 +101,19 @@ class Progress(Infinite):
         self.update()
 
     def next(self):
-        prev = self.index
         self.index = min(self.index + 1, self.max)
-        self.delta = self.index - prev
-        self.update_stats()
-        self.update()
+        
+        finished = False
+        if self.index==self.max:
+            finished = True
+        
+        now = time()
+        if finished or not self.period or (now - self.last_blit > self.period):
+            self.delta = self.index - self.prev
+            self.prev = self.index
+            self.update_stats()
+            self.update()
+            self.last_blit = now
 
     def goto(self, index):
         index = min(index, self.max)
