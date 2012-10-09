@@ -17,7 +17,7 @@ from __future__ import division
 from math import ceil
 from sys import stderr
 from time import time
-
+from datetime import timedelta
 
 __version__ = '1.0.2'
 
@@ -36,7 +36,7 @@ class Infinite(object):
 
         self.index = 0
         self.prev = 0
-        self.avg = 0
+        self.avg = 0        
         self._ts = time()
         
 
@@ -84,6 +84,7 @@ class Progress(Infinite):
         self.max = kwargs.get('max', 100)
         self.avg_window = kwargs.get('avg_window', self.max/10)
         self.eta = 0
+        self.td = timedelta(seconds=self.eta)
         self.last_blit = 0
 
     def update_stats(self):
@@ -99,6 +100,7 @@ class Progress(Infinite):
             alpha = 2.0/(w+1)
             self.avg = alpha*dt + (1-alpha)*self.avg if self.avg else dt
             self.eta = int(ceil(self.avg * self.remaining))
+            self.td = timedelta(seconds=self.eta)
         self._ts = now
         
         kv = [(key, val) for key, val in self.__dict__.items()
