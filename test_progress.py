@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 
-from random import randint
+from random import randint,random
 from time import sleep
 
 from progress.bar import (Bar, ChargingBar, FillingSquaresBar,
@@ -12,12 +12,17 @@ from progress.counter import Counter, Countdown, Stack, Pie
 
 
 for bar in (Bar, ChargingBar, FillingSquaresBar, FillingCirclesBar):
-    for i in bar(bar.__name__).iter(range(100)):
-        sleep(0.04)
-        
+    for i in bar(bar.__name__,suffix='%(percent).1f%% - %(eta)ds').iter(range(500)):
+        sleep(0.01*random()+(500-i)*0.0001)
+        #sleep(0.005)
+
+
 for bar in (Bar, ChargingBar, FillingSquaresBar, FillingCirclesBar):
-    for i in bar(bar.__name__+' (period=0.5s)',period=0.5).iter(range(100)):
-        sleep(0.04)
+    for i in bar(bar.__name__+' (period=0.1s)',period=0.1,suffix='%(percent).1f%% - %(eta)ds').iter(range(1000)):
+        sleep(0.01*random())
+        #sleep(0.005)
+        
+
 
 for bar in (IncrementalBar, ShadyBar):
     for i in bar(bar.__name__).iter(range(200)):

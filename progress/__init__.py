@@ -24,6 +24,7 @@ __version__ = '1.0.2'
 
 class Infinite(object):
     file = stderr
+    avg_window = 10
 
     def __init__(self, *args, **kwargs):
         self.ctx = {}
@@ -37,11 +38,15 @@ class Infinite(object):
         self.prev = 0
         self.avg = 0
         self._ts = time()
+        
 
     def update_stats(self):
-        # Calculate moving average
+        # Calculate exponential moving average
         now = time()
-        self.avg = now - self._ts
+        dt = now - self._ts
+        w = self.avg_window
+        alpha = 2.0/(w+1)
+        self.avg = alpha*dt + (1-alpha)*self.avg if self.avg else dt
         self._ts = now
 
         kv = [(key, val) for key, val in self.__dict__.items()
@@ -74,8 +79,10 @@ class Progress(Infinite):
     period = False    # refresh period
 
     def __init__(self, *args, **kwargs):
+        self.kwargs = kwargs
         super(Progress, self).__init__(*args, **kwargs)
         self.max = kwargs.get('max', 100)
+        self.avg_window = kwargs.get('avg_window', self.max/10)
         self.eta = 0
         self.last_blit = 0
 
@@ -87,10 +94,13 @@ class Progress(Infinite):
         # Calculate moving average
         now = time()
         if self.delta:
-            self.avg = (now - self._ts) / self.delta
+            dt = (now - self._ts) / self.delta
+            w = self.avg_window
+            alpha = 2.0/(w+1)
+            self.avg = alpha*dt + (1-alpha)*self.avg if self.avg else dt
             self.eta = int(ceil(self.avg * self.remaining))
         self._ts = now
-
+        
         kv = [(key, val) for key, val in self.__dict__.items()
                          if not key.startswith('_')]
         self.ctx.update(kv)
@@ -106,6 +116,7 @@ class Progress(Infinite):
         finished = False
         if self.index==self.max:
             finished = True
+        
         
         now = time()
         if finished or not self.period or (now - self.last_blit > self.period):
@@ -129,6 +140,8 @@ class Progress(Infinite):
     def iter(self, it):
         try:
             self.max = len(it)
+            self.avg_window = self.kwargs.get('avg_window', self.max/10)
+            
         except TypeError:
             pass
 
