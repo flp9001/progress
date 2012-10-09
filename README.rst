@@ -54,6 +54,7 @@ progress   index / max
 percent    progress * 100
 avg        rolling average time per item (in seconds)
 eta        avg * remaining
+td         timedelta(seconds=eta)
 =========  =============================
 
 Instead of passing all configuration options on instatiation, you can create
